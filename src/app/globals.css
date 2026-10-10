@@ -1,0 +1,64 @@
+@import "@fontsource/dm-sans/400.css";
+@import "@fontsource/dm-sans/500.css";
+@import "@fontsource/dm-sans/600.css";
+@import "@fontsource/dm-sans/700.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  --color-brand-50: #eefbf8;
+  --color-brand-100: #d5f5ee;
+  --color-brand-200: #aeeadf;
+  --color-brand-300: #7bd9cb;
+  --color-brand-400: #45c0b2;
+  --color-brand-500: #21a598;
+  --color-brand-600: #14857d;
+  --color-brand-700: #146b66;
+  --color-brand-800: #155553;
+  --color-brand-900: #164746;
+  --color-brand-950: #062a2a;
+
+  --color-canvas: #f4f6f8;
+  --color-surface: #ffffff;
+  --color-line: #e4e8ee;
+  --color-ink: #10192a;
+  --color-ink-soft: #48566d;
+  --color-ink-faint: #7d8aa0;
+
+  --shadow-card: 0 1px 2px 0 rgb(16 25 42 / 0.05);
+  --shadow-raised: 0 8px 24px -8px rgb(16 25 42 / 0.16);
+}
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: var(--color-brand-200);
+  color: var(--color-brand-950);
+}
+
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
