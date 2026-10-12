@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import {
   BedDouble,
@@ -63,7 +64,26 @@ async function loadDashboard(): Promise<DashboardData> {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { data, loading, error } = useAsync(loadDashboard, []);
+  const { data, loading, error, refetch } = useAsync(loadDashboard, []);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refetch();
+    };
+    const onFocus = () => refetch();
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) refetch();
+    };
+
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("pageshow", onPageShow);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("pageshow", onPageShow);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refetch]);
 
   const firstName = user?.staff?.firstName ?? user?.patient?.firstName ?? "";
   const greeting = firstName ? `Good day, ${firstName}` : "Good day";
