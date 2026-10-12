@@ -17,15 +17,37 @@ export interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  /** Allowed roles. Undefined = all staff roles (not PATIENT). */
   roles?: Role[];
 }
 
+/** Nav shown to staff (and super-admin/admin). PATIENT role uses PATIENT_NAV_ITEMS. */
 export const NAV_ITEMS: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/patients", label: "Patients", icon: UsersRound },
-  { href: "/appointments", label: "Appointments", icon: CalendarClock },
-  { href: "/admissions", label: "Admissions", icon: BedDouble },
-  { href: "/medical-records", label: "Medical Records", icon: ClipboardList },
+  {
+    href: "/patients",
+    label: "Patients",
+    icon: UsersRound,
+    roles: ["SUPER_ADMIN", "ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST", "LAB_TECHNICIAN", "PHARMACIST", "BILLING_STAFF", "RADIOLOGIST"],
+  },
+  {
+    href: "/appointments",
+    label: "Appointments",
+    icon: CalendarClock,
+    roles: ["SUPER_ADMIN", "ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST"],
+  },
+  {
+    href: "/admissions",
+    label: "Admissions",
+    icon: BedDouble,
+    roles: ["SUPER_ADMIN", "ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST"],
+  },
+  {
+    href: "/medical-records",
+    label: "Medical Records",
+    icon: ClipboardList,
+    roles: ["SUPER_ADMIN", "ADMIN", "DOCTOR", "NURSE"],
+  },
   {
     href: "/laboratory",
     label: "Laboratory",
@@ -42,12 +64,19 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/staff",
     label: "Staff",
     icon: Stethoscope,
-    roles: ["SUPER_ADMIN", "ADMIN", "DOCTOR", "NURSE"],
+    roles: ["SUPER_ADMIN", "ADMIN"],
   },
+];
+
+/** Nav shown to patients (limited view). */
+export const PATIENT_NAV_ITEMS: NavItem[] = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/appointments", label: "My Appointments", icon: CalendarClock },
 ];
 
 export function navForRole(role?: Role | null): NavItem[] {
   if (!role) return [];
+  if (role === "PATIENT") return PATIENT_NAV_ITEMS;
   return NAV_ITEMS.filter((item) => !item.roles || item.roles.includes(role));
 }
 
@@ -219,3 +248,6 @@ export const FREQUENCIES = [
 ];
 
 export const DURATION_UNITS = ["DAYS", "WEEKS", "MONTHS"];
+
+/** Roles that can create/manage staff members */
+export const ADMIN_ROLES: Role[] = ["SUPER_ADMIN", "ADMIN"];

@@ -35,6 +35,10 @@ interface DashboardData {
   pendingPrescriptions: number;
 }
 
+interface PatientDashboardData {
+  myAppointments: Appointment[];
+}
+
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -58,11 +62,16 @@ async function loadDashboard(): Promise<DashboardData> {
     todayAppointments: appointments.items,
     admittedCount: admissions.meta.total,
     pendingLabs: labs.meta.total,
-    pendingPrescriptions: prescriptions,
+    pendingPrescriptions: prescriptions as number,
   };
 }
 
-export default function DashboardPage() {
+async function loadPatientDashboard(): Promise<PatientDashboardData> {
+  const appointments = await apiList<Appointment>("/appointments", { limit: 10 });
+  return { myAppointments: appointments.items };
+}
+
+function StaffDashboard() {
   const { user } = useAuth();
   const { data, loading, error, refetch } = useAsync(loadDashboard, []);
 
@@ -85,7 +94,7 @@ export default function DashboardPage() {
     };
   }, [refetch]);
 
-  const firstName = user?.staff?.firstName ?? user?.patient?.firstName ?? "";
+  const firstName = user?.staff?.firstName ?? "";
   const greeting = firstName ? `Good day, ${firstName}` : "Good day";
   const today = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -93,17 +102,25 @@ export default function DashboardPage() {
     day: "numeric",
   });
 
+  const isAdmin = user?.role === "SUPER_ADMIN" || user?.role === "ADMIN";
+  const isReceptionist =
+    user?.role === "RECEPTIONIST" || user?.role === "DOCTOR" || user?.role === "NURSE" || isAdmin;
+
   return (
     <div className="space-y-6">
       <PageHeader title={greeting} description={`${today} · ${roleLabel(user?.role)} workspace`}>
-        <Link href="/patients/new" className={buttonClasses("outline", "md")}>
-          <UserPlus className="h-4 w-4" />
-          New patient
-        </Link>
-        <Link href="/appointments/new" className={buttonClasses("primary", "md")}>
-          <CalendarPlus className="h-4 w-4" />
-          Book appointment
-        </Link>
+        {isReceptionist ? (
+          <Link href="/patients/new" className={buttonClasses("outline", "md")}>
+            <UserPlus className="h-4 w-4" />
+            New patient
+          </Link>
+        ) : null}
+        {isReceptionist ? (
+          <Link href="/appointments/new" className={buttonClasses("primary", "md")}>
+            <CalendarPlus className="h-4 w-4" />
+            Book appointment
+          </Link>
+        ) : null}
       </PageHeader>
 
       {error ? (
@@ -250,4 +267,91 @@ export default function DashboardPage() {
       </div>
     </div>
   );
+}
+
+function PatientDashboard() {
+  const { user } = useAuth();
+  const { data, loading, error, refetch } = useAsync(loadPatientDashboard, []);
+
+  useEffect(() => {
+    const onFocus = () => refetch();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [refetch]);
+
+  const firstName = user?.patient?.firstName ?? "";
+  const greeting = firstName ? `Welcome, ${firstName}` : "Welcome";
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
+  return (
+    <div className="space-y-6">
+      <PageHeader title={greeting} description={`${today} · Patient portal`} />
+
+      {error ? (
+        <Card>
+          <CardBody>
+            <p className="text-sm text-red-600">{error}</p>
+          </CardBody>
+        </Card>
+      ) : null}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>My appointments</CardTitle>
+          <Link href="/appointments" className="text-sm font-medium text-brand-700 hover:underline">
+            View all
+          </Link>
+        </CardHeader>
+        {loading ? (
+          <LoadingBlock label="Loading appointments…" />
+        ) : data && data.myAppointments.length > 0 ? (
+          <ul className="divide-y divide-line">
+            {data.myAppointments.map((appointment) => (
+              <li key={appointment.id} className="flex items-center gap-4 px-5 py-3.5">
+                <div className="w-24 shrink-0 text-sm font-medium text-ink">
+                  {formatDate(appointment.scheduledAt)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <Link
+                    href={`/appointments/${appointment.id}`}
+                    className="block truncate text-sm font-medium text-ink hover:text-brand-700"
+                  >
+                    {humanize(appointment.type)}
+                  </Link>
+                  <p className="truncate text-xs text-ink-faint">
+                    {appointment.doctor?.staff
+                      ? `Dr. ${appointment.doctor.staff.firstName} ${appointment.doctor.staff.lastName}`
+                      : "—"}
+                  </p>
+                </div>
+                <Badge tone={statusTone(appointment.status)}>
+                  {humanize(appointment.status)}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <EmptyState
+            icon={CalendarClock}
+            title="No appointments"
+            description="Your scheduled appointments will appear here."
+          />
+        )}
+      </Card>
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  const { user } = useAuth();
+
+  if (user?.role === "PATIENT") {
+    return <PatientDashboard />;
+  }
+
+  return <StaffDashboard />;
 }

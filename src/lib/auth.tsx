@@ -18,12 +18,22 @@ import {
 } from "./api";
 import type { AuthTokens, Role, User } from "./types";
 
+export interface RegisterPayload {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  gender: string;
+  dateOfBirth: string;
+  phone: string;
+}
+
 interface AuthContextValue {
   user: User | null;
   tokens: AuthTokens | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<User>;
-  register: (email: string, password: string) => Promise<void>;
+  register: (payload: RegisterPayload) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<User | null>;
   hasRole: (...roles: Role[]) => boolean;
@@ -75,8 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return res.user;
   }, []);
 
-  const register = useCallback(async (email: string, password: string) => {
-    await apiPost("/auth/register", { email, password }, { auth: false });
+  const register = useCallback(async (payload: RegisterPayload) => {
+    await apiPost("/auth/register", payload, { auth: false });
   }, []);
 
   const logout = useCallback(async () => {

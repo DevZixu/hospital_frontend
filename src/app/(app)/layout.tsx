@@ -1,18 +1,40 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Activity } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { AppShell } from "@/components/layout/app-shell";
 
+/** Routes patients are NOT allowed to visit */
+const PATIENT_BLOCKED_PREFIXES = [
+  "/staff",
+  "/patients",
+  "/admissions",
+  "/laboratory",
+  "/pharmacy",
+  "/medical-records",
+];
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (!loading && !user) router.replace("/login");
-  }, [loading, user, router]);
+    if (loading) return;
+    if (!user) {
+      router.replace("/login");
+      return;
+    }
+    // Block patients from staff-only pages
+    if (
+      user.role === "PATIENT" &&
+      PATIENT_BLOCKED_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+    ) {
+      router.replace("/dashboard");
+    }
+  }, [loading, user, router, pathname]);
 
   if (loading || !user) {
     return (

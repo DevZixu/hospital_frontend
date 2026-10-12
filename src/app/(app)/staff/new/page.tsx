@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { apiPost, ApiError } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { ADMIN_ROLES } from "@/lib/constants";
 import { useToast } from "@/components/ui/toast";
 import type { Staff } from "@/lib/types";
 import { PageHeader } from "@/components/ui/page-header";
@@ -15,8 +17,16 @@ import { StaffForm, staffPayload, type StaffFormValues } from "@/components/staf
 export default function NewStaffPage() {
   const router = useRouter();
   const toast = useToast();
+  const { hasRole, loading } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Redirect non-admin users away from staff creation
+  useEffect(() => {
+    if (!loading && !hasRole(...ADMIN_ROLES)) {
+      router.replace("/dashboard");
+    }
+  }, [loading, hasRole, router]);
 
   const onSubmit = async (values: StaffFormValues) => {
     setSubmitting(true);
@@ -31,6 +41,8 @@ export default function NewStaffPage() {
       setSubmitting(false);
     }
   };
+
+  if (loading || !hasRole(...ADMIN_ROLES)) return null;
 
   return (
     <div className="space-y-6">

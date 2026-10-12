@@ -5,9 +5,10 @@ import Link from "next/link";
 import { Plus, Stethoscope } from "lucide-react";
 import { apiList } from "@/lib/api";
 import { useAsync, useDebouncedValue } from "@/lib/hooks";
-import { STAFF_ROLE_OPTIONS } from "@/lib/constants";
+import { STAFF_ROLE_OPTIONS, ADMIN_ROLES } from "@/lib/constants";
 import { roleLabel, staffName } from "@/lib/format";
 import type { Staff } from "@/lib/types";
+import { useAuth } from "@/lib/auth";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +22,8 @@ import { Pagination } from "@/components/ui/pagination";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 
 export default function StaffPage() {
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole(...ADMIN_ROLES);
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("");
   const [onDuty, setOnDuty] = useState("");
@@ -42,10 +45,12 @@ export default function StaffPage() {
   return (
     <div className="space-y-6">
       <PageHeader title="Staff" description="Doctors, nurses and administrative personnel.">
-        <Link href="/staff/new" className={buttonClasses("primary", "md")}>
-          <Plus className="h-4 w-4" />
-          Add staff
-        </Link>
+        {isAdmin ? (
+          <Link href="/staff/new" className={buttonClasses("primary", "md")}>
+            <Plus className="h-4 w-4" />
+            Add staff
+          </Link>
+        ) : null}
       </PageHeader>
 
       <Card>
@@ -145,10 +150,12 @@ export default function StaffPage() {
             title="No staff found"
             description="Try adjusting your filters or add a new staff member."
             action={
-              <Link href="/staff/new" className={buttonClasses("outline", "sm")}>
-                <Plus className="h-4 w-4" />
-                Add staff
-              </Link>
+              isAdmin ? (
+                <Link href="/staff/new" className={buttonClasses("outline", "sm")}>
+                  <Plus className="h-4 w-4" />
+                  Add staff
+                </Link>
+              ) : undefined
             }
           />
         )}
